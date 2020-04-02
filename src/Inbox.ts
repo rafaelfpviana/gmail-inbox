@@ -5,35 +5,20 @@ import { formatMessage } from './formatMessage';
 import { authorizeAccount } from './GoogleAuthorizer';
 import { InboxMethods } from './InboxMethods.interface';
 import { Label } from './Label.interface';
+import { Message } from './Message.interface';
 import { MessageDateType, SearchQuery, UnixTimestamp } from './SearchQuery.interface';
 sourceMapSupport.install();
 
-export interface Message {
-  messageId: string;
-  threadId: string;
-  subject: string | undefined;
-  from: string | undefined;
-  to: string | undefined;
-  receivedOn: string | undefined;
-  labelIds: string[];
-  snippet: string;
-  historyId: string;
-  /**
-   * unix ms timestamp string
-   */
-  internalDate: string;
-  getFullMessage: () => any;
-  body: {
-    html: string | undefined;
-    text: string | undefined;
-  };
-}
+
 
 export class Inbox implements InboxMethods {
   private gmailApi: gmail_v1.Gmail = google.gmail('v1');
   private authenticated: boolean = false;
 
-  constructor(private credentialsJsonPath: string, private tokenPath = 'gmail-token.json') {}
+  constructor(
+    private credentialsJsonPath: string,
+    private tokenPath = 'gmail-token.json'
+  ) {}
 
   public async authenticateAccount(): Promise<void> {
     const oAuthClient = await authorizeAccount(this.credentialsJsonPath, this.tokenPath);

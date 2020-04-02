@@ -1,4 +1,4 @@
-import { Message } from './Inbox';
+import { Message } from './Message.interface';
 import { Label } from './Label.interface';
 import { SearchQuery } from './SearchQuery.interface';
 
