@@ -81,7 +81,10 @@ export class Inbox implements InboxMethods {
    *   from: "myoldcompany@oldcompany.com"
    * }
    */
-  public findMessages(searchQuery: SearchQuery | string | undefined): Promise<Message[]> {
+  public findMessages(
+    searchQuery: SearchQuery | string | undefined,
+    maxResults: number = 1,
+  ): Promise<Message[]> {
     this.guardAuthentication();
     return new Promise((resolve, reject) => {
       let searchString: string | undefined;
@@ -93,6 +96,7 @@ export class Inbox implements InboxMethods {
 
       const query: any = {
         userId: 'me',
+        maxResults: maxResults
       };
       if (searchString) {
         query.q = searchString;
