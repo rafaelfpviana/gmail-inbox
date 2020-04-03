@@ -1,7 +1,8 @@
 import { gmail_v1, google } from 'googleapis';
 // support for typescript debugging (refers to ts files instead of the transpiled js files)
 import * as sourceMapSupport from 'source-map-support';
-import { formatMessage } from './formatMessage';
+import { FormatMessageInterface } from './FormatMessageInterface.interface';
+import { FormatMessage } from './FormatMessage';
 import { authorizeAccount } from './GoogleAuthorizer';
 import { InboxMethods } from './InboxMethods.interface';
 import { Label } from './Label.interface';
@@ -17,8 +18,9 @@ export class Inbox implements InboxMethods {
 
   constructor(
     private credentialsJsonPath: string,
-    private tokenPath = 'gmail-token.json'
-  ) {}
+    private tokenPath = 'gmail-token.json',
+    private formatMessage: FormatMessageInterface = new FormatMessage()
+  ) { }
 
   public async authenticateAccount(): Promise<void> {
     const oAuthClient = await authorizeAccount(this.credentialsJsonPath, this.tokenPath);
@@ -181,7 +183,7 @@ export class Inbox implements InboxMethods {
           if (errorMessage) {
             reject(errorMessage);
           } else {
-            resolve(formatMessage(message as any) as Message);
+            resolve(this.formatMessage!.format(message as any) as Message);
           }
         },
       );
