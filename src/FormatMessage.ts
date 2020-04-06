@@ -1,6 +1,6 @@
 import { gmail_v1 } from 'googleapis';
-import { Message } from './Message.interface';
 import { FormatMessageInterface } from './FormatMessageInterface.interface';
+import { Message } from './Message.interface';
 
 /**
  * Made these properties optional
@@ -42,17 +42,17 @@ export class FormatMessage implements FormatMessageInterface {
 
         return prettyMessage;
     }
-    getHeader(
+    public getHeader(
         name: string,
-        headers: Array<gmail_v1.Schema$MessagePartHeader> | undefined,
+        headers: gmail_v1.Schema$MessagePartHeader[] | undefined,
     ): string | undefined {
         if (!headers) {
             return;
         }
         const header = headers.find(h => h.name === name);
-        return header && headers['value'];
+        return header && header.value;
     };
-    getMessageBody(message: { data: gmail_v1.Schema$Message; }): { html: string | undefined; text: string | undefined; } {
+    public getMessageBody(message: { data: gmail_v1.Schema$Message; }): { html: string | undefined; text: string | undefined; } {
         let body: any = {};
         const messagePayload = message.data.payload;
         const messageBody = messagePayload?.body;
@@ -71,7 +71,7 @@ export class FormatMessage implements FormatMessageInterface {
         }
         return body;
     }
-    getPayloadParts(message: { data: gmail_v1.Schema$Message; }): any {
+    public getPayloadParts(message: { data: gmail_v1.Schema$Message; }): any {
         const body: any = {};
         const parts = message.data.payload?.parts;
         const hasSubParts = parts?.find(part => part.mimeType?.startsWith('multipart/'));

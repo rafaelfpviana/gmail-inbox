@@ -1,8 +1,8 @@
 import { gmail_v1, google } from 'googleapis';
 // support for typescript debugging (refers to ts files instead of the transpiled js files)
 import * as sourceMapSupport from 'source-map-support';
-import { FormatMessageInterface } from './FormatMessageInterface.interface';
 import { FormatMessage } from './FormatMessage';
+import { FormatMessageInterface } from './FormatMessageInterface.interface';
 import { authorizeAccount } from './GoogleAuthorizer';
 import { InboxMethods } from './InboxMethods.interface';
 import { Label } from './Label.interface';
@@ -15,6 +15,14 @@ sourceMapSupport.install();
 export class Inbox implements InboxMethods {
   private gmailApi: gmail_v1.Gmail = google.gmail('v1');
   private authenticated: boolean = false;
+  private _pageToken: string | boolean = false;
+
+  public getPageToken(): string | boolean {
+    return this._pageToken;
+  }
+  private pageToken(value: string) {
+    this._pageToken = value;
+  }
 
   constructor(
     private credentialsJsonPath: string,
@@ -84,6 +92,7 @@ export class Inbox implements InboxMethods {
   public findMessages(
     searchQuery: SearchQuery | string | undefined,
     maxResults: number = 1,
+    shouldLogEvents = false,
   ): Promise<Message[]> {
     this.guardAuthentication();
     return new Promise((resolve, reject) => {
@@ -96,11 +105,17 @@ export class Inbox implements InboxMethods {
 
       const query: any = {
         userId: 'me',
-        maxResults: maxResults
+        maxResults
       };
+      let token = this.getPageToken();
+      if(token != false)
+        query.pageToken = token;
+
       if (searchString) {
         query.q = searchString;
       }
+      this.log(shouldLogEvents, 'Using query:' + searchString);
+
       this.gmailApi.users.messages.list(query, async (errorMessage, result) => {
         if (errorMessage) {
           reject(errorMessage);
@@ -111,6 +126,10 @@ export class Inbox implements InboxMethods {
         if (!gmailMessages) {
           return resolve([]);
         }
+
+        let token: string = result?.data.nextPageToken || '';
+
+        this.pageToken(token);
 
         const messages: gmail_v1.Schema$Message[] = await Promise.all(
           gmailMessages.map(
@@ -314,7 +333,7 @@ export class Inbox implements InboxMethods {
   }
 
   private formatDate(date: Date) {
-    let month = '' + (date.getMonth() + 1);
+    let month = '' + date.getMonth();
     let day = '' + date.getDate();
     const year = date.getFullYear();
 

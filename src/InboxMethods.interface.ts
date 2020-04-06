@@ -1,5 +1,5 @@
-import { Message } from './Message.interface';
 import { Label } from './Label.interface';
+import { Message } from './Message.interface';
 import { SearchQuery } from './SearchQuery.interface';
 
 /**
