@@ -10,8 +10,6 @@ import { Message } from './Message.interface';
 import { MessageDateType, SearchQuery, UnixTimestamp } from './SearchQuery.interface';
 sourceMapSupport.install();
 
-
-
 export class Inbox implements InboxMethods {
   private gmailApi: gmail_v1.Gmail = google.gmail('v1');
   private authenticated: boolean = false;
@@ -27,8 +25,8 @@ export class Inbox implements InboxMethods {
   constructor(
     private credentialsJsonPath: string,
     private tokenPath = 'gmail-token.json',
-    private formatMessage: FormatMessageInterface = new FormatMessage()
-  ) { }
+    private formatMessage: FormatMessageInterface = new FormatMessage(),
+  ) {}
 
   public async authenticateAccount(): Promise<void> {
     const oAuthClient = await authorizeAccount(this.credentialsJsonPath, this.tokenPath);
@@ -105,11 +103,10 @@ export class Inbox implements InboxMethods {
 
       const query: any = {
         userId: 'me',
-        maxResults
+        maxResults,
       };
       let token = this.getPageToken();
-      if(token != false)
-        query.pageToken = token;
+      if (token != false) query.pageToken = token;
 
       if (searchString) {
         query.q = searchString;
@@ -333,7 +330,7 @@ export class Inbox implements InboxMethods {
   }
 
   private formatDate(date: Date) {
-    let month = '' + date.getMonth();
+    let month = '' + (date.getMonth() + 1);
     let day = '' + date.getDate();
     const year = date.getFullYear();
 

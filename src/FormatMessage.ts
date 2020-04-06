@@ -8,11 +8,11 @@ import { Message } from './Message.interface';
  * decouple this interface from here as it is being passed on to the custom formats
  */
 interface OriginalMessage extends Message {
-    getFullMessage: () => any;
-    body: {
-        html: string | undefined;
-        text: string | undefined;
-    };
+  getFullMessage: () => any;
+  body: {
+    html: string | undefined;
+    text: string | undefined;
+  };
 }
 
 /**
@@ -23,79 +23,77 @@ interface OriginalMessage extends Message {
  * @param message
  */
 export class FormatMessage implements FormatMessageInterface {
-    public format(message: { data: gmail_v1.Schema$Message }): Message {
-        const headers = message.data.payload?.headers;
-        const prettyMessage: OriginalMessage = {
-            body: this.getMessageBody(message),
-            from: this.getHeader('From', headers),
-            historyId: message.data.historyId!,
-            internalDate: message.data.internalDate!,
-            labelIds: message.data.labelIds!,
-            messageId: message.data.id!,
-            snippet: message.data.snippet!,
-            threadId: message.data.threadId!,
-            to: this.getHeader('To', headers),
-            subject: this.getHeader('Subject', headers),
-            receivedOn: this.getHeader('Date', headers),
-            getFullMessage: () => message.data.payload,
-        };
-
-        return prettyMessage;
-    }
-    public getHeader(
-        name: string,
-        headers: gmail_v1.Schema$MessagePartHeader[] | undefined,
-    ): string | undefined {
-        if (!headers) {
-            return;
-        }
-        const header = headers.find(h => h.name === name);
-        return header && header.value;
+  public format(message: { data: gmail_v1.Schema$Message }): Message {
+    const headers = message.data.payload?.headers;
+    const prettyMessage: OriginalMessage = {
+      body: this.getMessageBody(message),
+      from: this.getHeader('From', headers),
+      historyId: message.data.historyId!,
+      internalDate: message.data.internalDate!,
+      labelIds: message.data.labelIds!,
+      messageId: message.data.id!,
+      snippet: message.data.snippet!,
+      threadId: message.data.threadId!,
+      to: this.getHeader('To', headers),
+      subject: this.getHeader('Subject', headers),
+      receivedOn: this.getHeader('Date', headers),
+      getFullMessage: () => message.data.payload,
     };
-    public getMessageBody(message: { data: gmail_v1.Schema$Message; }): { html: string | undefined; text: string | undefined; } {
-        let body: any = {};
-        const messagePayload = message.data.payload;
-        const messageBody = messagePayload?.body;
-        if (messageBody?.size && messagePayload) {
-            switch (messagePayload?.mimeType) {
-                case 'text/html':
-                    body.html = Buffer.from(messageBody.data as string, 'base64').toString('utf8');
-                    break;
-                case 'text/plain':
-                default:
-                    body.text = Buffer.from(messageBody.data as string, 'base64').toString('utf8');
-                    break;
-            }
-        } else {
-            body = this.getPayloadParts(message);
-        }
-        return body;
+
+    return prettyMessage;
+  }
+  public getHeader(name: string, headers: gmail_v1.Schema$MessagePartHeader[] | undefined): string | undefined {
+    if (!headers) {
+      return;
     }
-    public getPayloadParts(message: { data: gmail_v1.Schema$Message; }): any {
-        const body: any = {};
-        const parts = message.data.payload?.parts;
-        const hasSubParts = parts?.find(part => part.mimeType?.startsWith('multipart/'));
-        if (hasSubParts) {
-            // recursively continue until you find the content
-            const newMessage: any = {
-                Headers: {},
-                config: {},
-                data: { payload: hasSubParts } as gmail_v1.Schema$Message,
-            };
-            return this.getPayloadParts(newMessage);
-        }
-        const htmlBodyPart = parts?.find(part => part.mimeType === 'text/html');
+    const header = headers.find(h => h.name === name);
+    return header && header.value;
+  }
+  public getMessageBody(message: {
+    data: gmail_v1.Schema$Message;
+  }): { html: string | undefined; text: string | undefined } {
+    let body: any = {};
+    const messagePayload = message.data.payload;
+    const messageBody = messagePayload?.body;
+    if (messageBody?.size && messagePayload) {
+      switch (messagePayload?.mimeType) {
+        case 'text/html':
+          body.html = Buffer.from(messageBody.data as string, 'base64').toString('utf8');
+          break;
+        case 'text/plain':
+        default:
+          body.text = Buffer.from(messageBody.data as string, 'base64').toString('utf8');
+          break;
+      }
+    } else {
+      body = this.getPayloadParts(message);
+    }
+    return body;
+  }
+  public getPayloadParts(message: { data: gmail_v1.Schema$Message }): any {
+    const body: any = {};
+    const parts = message.data.payload?.parts;
+    const hasSubParts = parts?.find(part => part.mimeType?.startsWith('multipart/'));
+    if (hasSubParts) {
+      // recursively continue until you find the content
+      const newMessage: any = {
+        Headers: {},
+        config: {},
+        data: { payload: hasSubParts } as gmail_v1.Schema$Message,
+      };
+      return this.getPayloadParts(newMessage);
+    }
+    const htmlBodyPart = parts?.find(part => part.mimeType === 'text/html');
 
-        if (htmlBodyPart && htmlBodyPart.body && htmlBodyPart.body.data) {
-            body.html = Buffer.from(htmlBodyPart.body.data, 'base64').toString('utf8');
-        }
-        const textBodyPart = parts?.find(part => part.mimeType === 'text/plain');
+    if (htmlBodyPart && htmlBodyPart.body && htmlBodyPart.body.data) {
+      body.html = Buffer.from(htmlBodyPart.body.data, 'base64').toString('utf8');
+    }
+    const textBodyPart = parts?.find(part => part.mimeType === 'text/plain');
 
-        if (textBodyPart && textBodyPart.body && textBodyPart.body.data) {
-            body.text = Buffer.from(textBodyPart.body.data, 'base64').toString('utf8');
-        }
-
-        return body;
+    if (textBodyPart && textBodyPart.body && textBodyPart.body.data) {
+      body.text = Buffer.from(textBodyPart.body.data, 'base64').toString('utf8');
     }
 
+    return body;
+  }
 }
